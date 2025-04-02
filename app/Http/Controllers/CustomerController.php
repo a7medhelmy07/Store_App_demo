@@ -38,7 +38,7 @@ class CustomerController extends Controller
         $product = Product::findOrFail($productId); // Find the product by its ID
 
         // Add the product to the cart and prevent duplicates
-        $user->cart()->syncWithoutDetaching($product);
+        $user->cart->syncWithoutDetaching($product);
 
         return redirect()->route('customer.cart')->with('success', 'Product added to the cart successfully!');
     }
@@ -60,11 +60,17 @@ class CustomerController extends Controller
             'total_price' => $cart->sum('price'),
         ]);
 
-        // Add the products to the order in one go
-        $order->products()->sync($cart->pluck('id'));
+        // Add products to the OrderItem table with additional details
+        foreach ($cart as $product) {
+            $order->orderItems()->create([
+                'product_id' => $product->id,
+                'quantity' => 1, // Adjust based on your logic
+                'price' => $product->price,
+            ]);
+        }
 
         // Clear the cart after placing the order
-        $user->cart()->detach();
+        $user->cart->detach();
 
         return redirect()->route('customer.orders')->with('success', 'Order placed successfully!');
     }

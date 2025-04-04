@@ -19,35 +19,39 @@ class AdminController extends Controller
         $productCount = Product::count();
         $orderCount = Order::count();
 
-        return view('admin.dashboard', compact('productCount', 'userCount', 'orderCount'));
+        return response()->json([
+            'productCount' => $productCount,
+            'userCount' => $userCount,
+            'orderCount' => $orderCount,
+        ]);
     }
 
     // Manage users (view all users)
     public function Manageusers()
     {
         $users = User::paginate(10);
-        return view('admin.manage-users', compact('users'));
+        return response()->json($users);
     }
 
     // Manage products (view all products)
     public function Manageproducts()
     {
         $products = Product::paginate(10);
-        return view('admin.manage-products', compact('products'));
+        return response()->json($products);
     }
 
     // Manage orders (view all orders)
     public function Manageorders()
     {
         $orders = Order::with('user')->paginate(10);
-        return view('admin.manage-orders', compact('orders'));
+        return response()->json($orders);
     }
 
     // Display a list of categories
     public function manageCategories()
     {
         $categories = Category::paginate(10);  // Fetching all categories
-        return view('admin.manage-categories', compact('categories'));
+        return response()->json($categories);
     }
 
     // Show the form for creating a new category
@@ -63,9 +67,12 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        Category::create($request->all());
+        $category = Category::create($request->all());
 
-        return redirect()->route('admin.manage-categories')->with('success', 'Category created successfully.');
+        return response()->json([
+            'message' => 'Category created successfully.',
+            'category' => $category,
+        ]);
     }
 
     // Show the form for editing an existing category
@@ -83,7 +90,10 @@ class AdminController extends Controller
 
         $category->update($request->all());
 
-        return redirect()->route('admin.manage-categories')->with('success', 'Category updated successfully.');
+        return response()->json([
+            'message' => 'Category updated successfully.',
+            'category' => $category,
+        ]);
     }
 
     // Delete a category
@@ -91,6 +101,8 @@ class AdminController extends Controller
     {
         $category->delete();
 
-        return redirect()->route('admin.manage-categories')->with('success', 'Category deleted successfully.');
+        return response()->json([
+            'message' => 'Category deleted successfully.',
+        ]);
     }
 }

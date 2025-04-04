@@ -14,13 +14,13 @@ class CustomerController extends Controller
     public function index()
     {
         $products = Product::all(); // Fetch all products from the database
-        return view('customer.index', compact('products'));
+        return response()->json($products);
     }
 
     // Show product details
     public function showProduct(Product $product) // Use automatic model binding
     {
-        return view('customer.show-product', compact('product'));
+        return response()->json($product);
     }
 
     // Show the customer's shopping cart
@@ -28,7 +28,7 @@ class CustomerController extends Controller
     {
         $user = Auth::user(); // Get the currently authenticated user
         $cart = $user->cart; // Get the products in the user's cart
-        return view('customer.cart', compact('cart'));
+        return response()->json($cart);
     }
 
     // Add a product to the shopping cart
@@ -40,7 +40,7 @@ class CustomerController extends Controller
         // Add the product to the cart and prevent duplicates
         $user->cart->syncWithoutDetaching($product);
 
-        return redirect()->route('customer.cart')->with('success', 'Product added to the cart successfully!');
+        return response()->json(['message' => 'Product added to the cart successfully!']);
     }
 
     // Checkout and create an order
@@ -50,7 +50,7 @@ class CustomerController extends Controller
         $cart = $user->cart; // Get the products in the cart
 
         if ($cart->isEmpty()) {
-            return redirect()->route('customer.cart')->with('error', 'Your cart is empty!');
+            return response()->json(['error' => 'Your cart is empty!'], 400);
         }
 
         // Create the order
@@ -72,7 +72,7 @@ class CustomerController extends Controller
         // Clear the cart after placing the order
         $user->cart->detach();
 
-        return redirect()->route('customer.orders')->with('success', 'Order placed successfully!');
+        return response()->json(['message' => 'Order placed successfully!', 'order' => $order]);
     }
 
     // Show the customer's previous orders
@@ -80,13 +80,13 @@ class CustomerController extends Controller
     {
         $user = Auth::user(); // Get the currently authenticated user
         $orders = $user->orders; // Get all the orders of the user
-        return view('customer.orders', compact('orders'));
+        return response()->json($orders);
     }
 
     // Show order details
     public function showOrder($orderId)
     {
         $order = Order::findOrFail($orderId); // Fetch the order by its ID
-        return view('customer.show-order', compact('order'));
+        return response()->json($order);
     }
 }

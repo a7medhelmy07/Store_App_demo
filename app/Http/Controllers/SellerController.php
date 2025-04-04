@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\productRequest;
+use App\Http\Requests\ProductRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
 use App\Models\Order;
@@ -15,40 +15,47 @@ class SellerController extends Controller
         $products = Auth::user()->products;
         $ordersCount = Auth::check() ? Order::where('seller_id', Auth::id())->count() : 0;
 
-
-        return view('seller.index', compact('products', 'ordersCount'));
+        return response()->json([
+            'products' => $products,
+            'ordersCount' => $ordersCount,
+        ]);
     }
 
     public function manageProducts()
     {
         $products = Auth::check() ? Product::where('user_id', Auth::user()->id)->get() : collect();
-        return view('seller.manage-products', compact('products'));
+        return response()->json($products);
     }
 
     public function addProduct()
     {
-        return view('seller.add-product');
+        $categories = Category::all();
+        return response()->json($categories);
     }
 
     public function viewOrders()
     {
         $orders = Auth::check() ? Order::where('seller_id', Auth::id())->get() : collect();
 
-        return view('seller.view-orders', compact('orders'));
+        return response()->json($orders);
     }
 
     public function storeProduct(ProductRequest $request)
     {
-        Product::create([
-            'name'=>$request->name,
-            'description'=>$request->description,
-            'price'=>$request->price,
-            'stock'=>$request->stock,
-            'category_name'=>$request->category_name,
-            'image_path'=>$request->image_path,
+        $product = Product::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'category_name' => $request->category_name,
+            'image_path' => $request->image_path,
             'user_id' => Auth::user()->id,
         ]);
-        return redirect()->route('seller.manage-products')->with('success', 'Product added successfully!');
+
+        return response()->json([
+            'message' => 'Product added successfully!',
+            'product' => $product,
+        ]);
     }
 
     public function editProduct($id)
@@ -56,11 +63,14 @@ class SellerController extends Controller
         $product = Product::findOrFail($id);
 
         if ($product->user_id != Auth::user()->id) {
-            return redirect()->route('seller.manage-products')->with('error', 'You cannot edit this product!');
+            return response()->json(['error' => 'You cannot edit this product!'], 403);
         }
 
         $categories = Category::all();
-        return view('seller.edit-product', compact('product', 'categories'));
+        return response()->json([
+            'product' => $product,
+            'categories' => $categories,
+        ]);
     }
 
     public function updateProduct(ProductRequest $request, $id)
@@ -68,7 +78,7 @@ class SellerController extends Controller
         $product = Product::findOrFail($id);
 
         if ($product->user_id != Auth::user()->id) {
-            return redirect()->route('seller.manage-products')->with('error', 'You cannot edit this product!');
+            return response()->json(['error' => 'You cannot edit this product!'], 403);
         }
 
         $product->update([
@@ -80,7 +90,10 @@ class SellerController extends Controller
             'image_path' => $request->image_path,
         ]);
 
-        return redirect()->route('seller.manage-products')->with('success', 'Product updated successfully!');
+        return response()->json([
+            'message' => 'Product updated successfully!',
+            'product' => $product,
+        ]);
     }
 
     public function deleteProduct($id)
@@ -88,11 +101,11 @@ class SellerController extends Controller
         $product = Product::findOrFail($id);
 
         if ($product->user_id != Auth::id()) {
-            return redirect()->route('seller.manage-products')->with('error', 'You cannot delete this product!');
+            return response()->json(['error' => 'You cannot delete this product!'], 403);
         }
 
         $product->delete();
 
-        return redirect()->route('seller.manage-products')->with('success', 'Product deleted successfully!');
+        return response()->json(['message' => 'Product deleted successfully!']);
     }
 }
